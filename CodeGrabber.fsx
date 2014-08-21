@@ -18,6 +18,8 @@ open System.Xml
 open System.Xml.Linq
 open Microsoft.Office.Interop
 
+let contains lookFor inSeq = Seq.exists (fun elem -> elem = lookFor) inSeq
+
 let convertPath (path : string, extension : string) =
     let fileList = Seq.toList (System.IO.Directory.EnumerateFiles(path, "*." + extension))
     fileList.[0]
@@ -41,7 +43,7 @@ let clearDown(xlsFile : Excel.Worksheet) =
     clean 3
 
 let enterValue(xlsFile : Excel.Worksheet, value : string, column : string) =
-    let total = column + "1000"
+    let total = column + "2000"
     let value = value.Replace("&amp;","&")
     let rec loop n =
         let cell = column + (n.ToString())
@@ -69,8 +71,36 @@ let grabXml(xlsFile : Excel.Worksheet, nodePath : string, column : string) =
         printfn "Something doesn't exist - are your xml and excel files in the right places?"
 
 // Obviously we will need some logic to decide which paths to use (i.e. for occupations, modifications, etc)
-// For the moment this just works for pet breeds...
+// For the moment this just works for pet breeds... (actually I've changed it now to work for just security devices...)
 
-clearDown(xlsTab(xlsFile, "Breed Codes"))
-grabXml(xlsTab(xlsFile, "Breed Codes"), "//lookup/breeds/breed/ctmvalue", "E")
-grabXml(xlsTab(xlsFile, "Breed Codes"), "//lookup/breeds/breed/providervalue", "F")
+let rec menuLoop n =
+    printfn "Please choose the code you want to check from the following list:"
+    printfn "1. Occupations"
+    printfn "2. Businesses"
+    printfn "3. Modifications"
+    printfn "4. Convictions"
+    printfn "4. Security Codes"
+    printfn "6. Breeds (pet)"
+    let choice = System.Console.ReadLine()
+    if contains choice ["1"; "2"; "3"; "4"; "5"; "6"] then
+        printfn "OK"
+        choice
+    else
+        printfn "Invalid choice."
+        menuLoop (n + 1)
+
+let choice = menuLoop 0
+
+let sheet, ctmValue, providerValue = match choice with
+                                        | "1" -> "occupation codes", "//occupation/ctmvalue", "//occupation/providervalue"   
+                                        | "2" -> "business codes", "//businesscode/ctmvalue", "//businesscode/providervalue"
+                                        | "3" -> "modification codes", "//modification/ctmvalue", "//modification/providervalue"
+                                        | "4" -> "conviction codes", "//conviction/ctmvalue", "//conviction/providervalue"
+                                        | "5" -> "Security Codes", "//vehicle/securitycode/ctmvalue", "//vehicle/securitycode/providervalue"
+                                        | "6" -> "Breed Codes", "//breed/ctmvalue", "//breed/providervalue"
+                                        | _ -> "", "", ""
+
+
+clearDown(xlsTab(xlsFile, sheet))
+grabXml(xlsTab(xlsFile, sheet), ctmValue, "E")
+grabXml(xlsTab(xlsFile, sheet), providerValue, "F")
