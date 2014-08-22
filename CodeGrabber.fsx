@@ -24,8 +24,11 @@ let convertPath (path : string, extension : string) =
     let fileList = Seq.toList (System.IO.Directory.EnumerateFiles(path, "*." + extension))
     fileList.[0]
 
-let xmlPath = convertPath(@"C:\x_FSharpStuff\_dat\lookup\", "xml")
-let xlsPath = convertPath(@"C:\x_FSharpStuff\_dat\lookup\", "xlsx")
+printf "Enter brand name: "
+let brand = System.Console.ReadLine()
+
+let xmlPath = convertPath(@"C:\Dev\panel.transforms\src\transforms\unpublished\Car\" + brand, "xml")
+let xlsPath = convertPath(@"C:\Dev\panel.testplans\Car\" + brand, "xlsx")
 
 let xlApp = new Excel.ApplicationClass()
 xlApp.Visible <- true
